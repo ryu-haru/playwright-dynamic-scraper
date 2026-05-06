@@ -7,7 +7,7 @@ function validateRequest(req, res) {
   }
   if (process.env.RAPIDAPI_PROXY_SECRET) {
     const secret = req.headers['x-rapidapi-proxy-secret'];
-    if (secret !== process.env.RAPIDAPI_PROXY_SECRET) {
+    if (secret !== process.env.RAPIDAPI_PROXY_SECRET.trim()) {
       res.status(403).json({ error: 'Forbidden' });
       return false;
     }

@@ -7,5 +7,9 @@
     "api/**/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/scrape/:path*", "destination": "/api/scrape/:path*" }
+  ]
 }
