@@ -1,0 +1,427 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Playwright Dynamic Scraper",
+    "description": "Playwright-powered web scraping API. Handles JavaScript-heavy sites, SPAs, and dynamically rendered pages.",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://scraping-api-three-theta.vercel.app"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health Check",
+        "description": "Check API health status",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "ts": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/text": {
+      "get": {
+        "operationId": "scrapeText",
+        "summary": "Scrape Text",
+        "description": "Extract visible text content from a URL. Handles JavaScript-rendered content.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          },
+          {
+            "name": "selector",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "CSS selector to target specific element (default: full page text)"
+          },
+          {
+            "name": "wait_for",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Wait for this CSS selector to appear before extracting"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extracted text content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "selector": { "type": "string", "nullable": true },
+                    "text": { "type": "string" },
+                    "elapsed_ms": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/html": {
+      "get": {
+        "operationId": "scrapeHtml",
+        "summary": "Scrape HTML",
+        "description": "Extract HTML content from a URL. Returns body HTML by default.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          },
+          {
+            "name": "selector",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "CSS selector to extract specific element's innerHTML"
+          },
+          {
+            "name": "full",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["true", "false"] },
+            "description": "Set to 'true' to return full HTML document (including head)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extracted HTML content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "selector": { "type": "string" },
+                    "sizeKb": { "type": "number" },
+                    "truncated": { "type": "boolean" },
+                    "html": { "type": "string" },
+                    "elapsed_ms": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/links": {
+      "get": {
+        "operationId": "scrapeLinks",
+        "summary": "Scrape Links",
+        "description": "Extract all hyperlinks from a URL with metadata.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["internal", "external"] },
+            "description": "Filter links: 'internal' (same domain) or 'external' (other domains)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of unique links with metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "total": { "type": "number" },
+                    "internal": { "type": "number" },
+                    "external": { "type": "number" },
+                    "elapsed_ms": { "type": "number" },
+                    "links": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": { "type": "string" },
+                          "href": { "type": "string" },
+                          "isExternal": { "type": "boolean" },
+                          "rel": { "type": "string", "nullable": true },
+                          "title": { "type": "string", "nullable": true }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/metadata": {
+      "get": {
+        "operationId": "scrapeMetadata",
+        "summary": "Scrape Metadata",
+        "description": "Extract SEO and Open Graph metadata from a URL.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page metadata including OG, Twitter Card, and SEO tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "elapsed_ms": { "type": "number" },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "title": { "type": "string" },
+                        "description": { "type": "string", "nullable": true },
+                        "ogTitle": { "type": "string", "nullable": true },
+                        "ogImage": { "type": "string", "nullable": true },
+                        "ogUrl": { "type": "string", "nullable": true },
+                        "ogType": { "type": "string", "nullable": true },
+                        "twitterTitle": { "type": "string", "nullable": true },
+                        "twitterImage": { "type": "string", "nullable": true },
+                        "twitterCard": { "type": "string", "nullable": true },
+                        "canonical": { "type": "string", "nullable": true },
+                        "lang": { "type": "string", "nullable": true },
+                        "charset": { "type": "string" },
+                        "keywords": { "type": "string", "nullable": true },
+                        "author": { "type": "string", "nullable": true },
+                        "robots": { "type": "string", "nullable": true },
+                        "h1": { "type": "string", "nullable": true },
+                        "favicon": { "type": "string", "nullable": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/list": {
+      "get": {
+        "operationId": "scrapeList",
+        "summary": "Scrape List",
+        "description": "Extract multiple elements matching a CSS selector as an array.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          },
+          {
+            "name": "selector",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "CSS selector for elements to extract"
+          },
+          {
+            "name": "attribute",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Extract element attribute instead of text content (e.g. 'href', 'src')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of extracted text or attribute values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "selector": { "type": "string" },
+                    "count": { "type": "number" },
+                    "elapsed_ms": { "type": "number" },
+                    "items": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/table": {
+      "get": {
+        "operationId": "scrapeTable",
+        "summary": "Scrape Table",
+        "description": "Extract table data from a URL as structured rows and headers.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to scrape"
+          },
+          {
+            "name": "selector",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "CSS selector for the table element (default: 'table')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Structured table data with headers and rows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "url": { "type": "string" },
+                    "selector": { "type": "string" },
+                    "elapsed_ms": { "type": "number" },
+                    "headers": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/screenshot": {
+      "get": {
+        "operationId": "takeScreenshot",
+        "summary": "Screenshot",
+        "description": "Capture a PNG screenshot of a URL.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to screenshot"
+          },
+          {
+            "name": "full_page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["true", "false"] },
+            "description": "Set to 'true' to capture full scrollable page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG image of the page",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scrape/pdf": {
+      "get": {
+        "operationId": "exportPdf",
+        "summary": "Export PDF",
+        "description": "Export a URL as a PDF file.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Target URL to export as PDF"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["A4", "A3", "Letter", "Legal"] },
+            "description": "Page format (default: A4)"
+          },
+          {
+            "name": "landscape",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["true", "false"] },
+            "description": "Set to 'true' for landscape orientation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF file download",
+            "content": {
+              "application/pdf": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
