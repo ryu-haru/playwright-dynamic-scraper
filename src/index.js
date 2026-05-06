@@ -102,6 +102,47 @@ app.get('/scrape/table', async (req, res) => {
   }
 });
 
+// メタデータ取得（title, description, og:*, twitter:*, JSON-LD）
+app.get('/scrape/meta', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url は必須です' });
+
+  try {
+    const meta = await withPage(async (page) => {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      return page.evaluate(() => {
+        const get = (sel) => document.querySelector(sel)?.getAttribute('content') ?? null;
+        const jsonLd = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+          .map(s => { try { return JSON.parse(s.textContent); } catch { return null; } })
+          .filter(Boolean);
+        return {
+          title: document.title || null,
+          description: get('meta[name="description"]'),
+          canonical: document.querySelector('link[rel="canonical"]')?.href ?? null,
+          og: {
+            title: get('meta[property="og:title"]'),
+            description: get('meta[property="og:description"]'),
+            image: get('meta[property="og:image"]'),
+            url: get('meta[property="og:url"]'),
+            type: get('meta[property="og:type"]'),
+            site_name: get('meta[property="og:site_name"]'),
+          },
+          twitter: {
+            card: get('meta[name="twitter:card"]'),
+            title: get('meta[name="twitter:title"]'),
+            description: get('meta[name="twitter:description"]'),
+            image: get('meta[name="twitter:image"]'),
+          },
+          json_ld: jsonLd,
+        };
+      });
+    });
+    res.json({ url, ...meta });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // スクリーンショット
 app.get('/scrape/screenshot', async (req, res) => {
   const { url, full_page = 'false' } = req.query;
