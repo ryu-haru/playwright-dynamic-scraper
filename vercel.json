@@ -1,0 +1,11 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "installCommand": "npm install",
+  "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  }
+}
