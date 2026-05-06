@@ -41,6 +41,8 @@ A serverless web scraping API powered by Playwright and Chromium, hosted on Verc
 
 ### `/scrape/screenshot`
 - `full_page=true` — Capture full scrollable page
+- `width` — Viewport width in pixels (default: 1280, range: 320–3840)
+- `height` — Viewport height in pixels (default: 800, range: 240–2160)
 
 ### `/scrape/pdf`
 - `format` — `A4` | `A3` | `Letter` | `Legal` (default: `A4`)
